@@ -96,7 +96,7 @@ class Simplex:
 
     def Compute(self):
         while (True):
-            omega = copy.copy(self.table[self.table.shape[0] - 1, 0:self.table.shape[1] - 1])
+            omega = copy.deepcopy(self.table[self.table.shape[0] - 1, 0:self.table.shape[1] - 1])
             for i in self.base:
                 omega[i] = 0
             l = omega.argmax()
@@ -109,11 +109,11 @@ class Simplex:
                 print("最优值", self.table[self.table.shape[0] - 1, self.table.shape[1] - 1])
                 break
             else:
-                Pl = copy.copy(self.table[0:self.table.shape[0]-1, l])
+                Pl = copy.deepcopy(self.table[0:self.table.shape[0]-1, l])
                 if Pl.max() <= 0:
                     print("无最优解")
                 else:
-                    b = copy.copy(self.table[0:self.table.shape[0]-1, self.table.shape[1] - 1])
+                    b = copy.deepcopy(self.table[0:self.table.shape[0]-1, self.table.shape[1] - 1])
                     for i in range(len(Pl)):
                         if Pl[i] <= 0:
                             Pl[i] = 1e4
@@ -122,17 +122,23 @@ class Simplex:
                     k = Pl.argmin()
                     self.base[k] = l
 
-                    self.table[k, :] /= Pl[k]
+                    akl = self.table[k, l]
+                    omegakl = copy.deepcopy(self.table[self.table.shape[0] - 1, l])
+                    self.table[self.table.shape[0] - 1, :] -= (self.table[k, :] / akl) * omegakl
+
+                    self.table[k, :] /= akl
                     for r in range(len(self.table)):
-                        if r != k:
+                        if r != k and r != self.table.shape[0] - 1:
                             a = self.table[r, l] / self.table[k, l]
                             self.table[r, :] -= a * self.table[k, :]
+
             self.echo()
         # while (True)
     
     def echo(self):
         for i in self.table:
             print(i)
+        print("\n")
 
 if __name__ == "__main__":
     A = np.array([[1, 3, -1, 0, 2, 0], [0, -2, 4, 1, 0, 0], [0, -4, 3, 0, 8, 1]])
