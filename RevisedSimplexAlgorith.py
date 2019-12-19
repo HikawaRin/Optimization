@@ -26,8 +26,14 @@ class RevisedSimplex:
             pi = self.Cb.dot(self.invB)
             omega = pi.dot(self.A) - self.C
             if (omega.max() <= 0):
-                f = self.Cb.dot(self.b.T)
-                print("最优解", f)
+                self.b = self.invB.dot(self.b)
+                # f = self.Cb.T.dot(self.b)
+                X = np.array([0 for _ in range(self.A.shape[1])])
+                for i in range(len(self.base)):
+                    X[self.base[i]] = self.b[i]
+                f = self.C.T.dot(X)
+                print("最优解", X)
+                print("最优值", f)
                 break
             
             l = 0
@@ -39,21 +45,21 @@ class RevisedSimplex:
             if (Xb.max() <= 0):
                 print("无最优解")
                 break
-            self.A[:, l] = Xb.T
-            theta = self.b / Xb
+            theta = self.b / (Xb + 1e-8)
             k = 0
             for i in range(len(theta)):
                 if (Xb[i] > 0 and theta[i] < theta[k]):
                     k = i
             
-            Ekl = np.eye(self.A.shape[0])
-            Ekl[:, k] = -1 * self.A[:, l] / self.A[k, l]
-            Ekl[k, k] = 1 / self.A[k, l]
+            # 使用计算出的Xb计算Ekl
+            Ekl = np.eye(self.A.shape[0]).astype(np.double)
+            Ekl[:, k] = -1 * Xb / Xb[k]
+            Ekl[k, k] = 1 / Xb[k]
 
+            # 不更新A及b
             self.invB = Ekl.dot(self.invB)
             self.base[k] = l
             self.Cb = self.C[self.base]
-            self.b = self.invB.dot(self.b)
         # while (True)
 
 if __name__ == "__main__":
